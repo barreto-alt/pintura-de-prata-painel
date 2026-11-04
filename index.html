@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pintura de Prata — Painel financeiro</title>
+<style>
+:root{
+  --font-anthropic-sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-anthropic-serif: Georgia, "Times New Roman", serif;
+  --color-fg:#1d2126; --color-fg-muted:#5d6670; --color-bg:#f6f7f8; --color-panel:#ffffff; --color-border-line:#e1e4e8;
+  --color-ok:#1f7a4d; --color-warn:#a45f00; --color-bad:#c0362c;
+  --cds-chart-muted:#c5cbd2; --cds-chart-grid:#eceef1; --cds-chart-axis:#a9b0b8; --cds-chart-reference:#7b848e; --cds-chart-status-critical:#d64535;
+  --cds-surface-popover:#ffffff; --cds-border:#d6dae0; --cds-shadow-popover:0 4px 16px rgba(0,0,0,.12); --cds-text-secondary:#5d6670;
+  --cds-font-size-caption:.8125rem; --cds-font-size-body:.9375rem; --cds-font-size-heading:1.0625rem; --cds-font-size-title:1.75rem; --cds-font-weight-medium:600;
+  --cds-gap-xs:4px; --cds-gap-sm:8px; --cds-gap-md:14px; --cds-gap-lg:24px; --cds-gap-xl:36px;
+  --cds-pad-xs:4px; --cds-pad-sm:8px; --cds-pad-md:14px; --cds-pad-lg:20px; --cds-pad-xl:28px;
+  --cds-radius:8px; --cds-dur-slow:.3s; --cds-ease-out:cubic-bezier(.2,.8,.2,1);
+  --s1:#2f6db5; --s2:#d98a1c; --s3:#3f9a6b; --s4:#8a5cc2;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --color-fg:#e8eaed; --color-fg-muted:#a3abb4; --color-bg:#15181c; --color-panel:#1e2228; --color-border-line:#30363e;
+  --color-ok:#5cc28f; --color-warn:#e3a54a; --color-bad:#f07167;
+  --cds-chart-muted:#4a525c; --cds-chart-grid:#2a2f36; --cds-chart-axis:#5d6670; --cds-chart-status-critical:#f06a5d;
+  --cds-surface-popover:#262b32; --cds-border:#3a414a; --cds-shadow-popover:0 4px 16px rgba(0,0,0,.5); --cds-text-secondary:#a3abb4;
+  --s1:#6ea8ec; --s2:#f0aa4a; --s3:#62c08f; --s4:#ad89e0;
+  color-scheme: dark;
+}}
+html,body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:var(--font-anthropic-sans);font-size:15px;line-height:1.45}
+#dash-root{max-width:1200px;margin-inline:auto;padding:28px max(16px, env(safe-area-inset-right,0px)) 48px max(16px, env(safe-area-inset-left,0px))}
+.dash-skeleton{color:transparent!important}
+[hidden]{display:none!important}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+(function(){
+  const DATA = {"resultados": [{"mes": "2026-10", "cliente": "Particular", "tipo": "particular", "carros": "44", "vr_cia": "0", "vr_part": "118729.45", "orcado": "118729.45", "faturado": "115067.50", "encargos": "0", "diferenca": "-3661.95", "gasto": "19195.26"}, {"mes": "2026-10", "cliente": "Porto Seguro", "tipo": "seguradora", "carros": "5", "vr_cia": "84631.96", "vr_part": "0", "orcado": "84631.96", "faturado": "83959.53", "encargos": "-672.23", "diferenca": "-0.20", "gasto": "32099.47"}, {"mes": "2026-10", "cliente": "YLM Seguros", "tipo": "seguradora", "carros": "1", "vr_cia": "37671.45", "vr_part": "0", "orcado": "37671.45", "faturado": "37671.45", "encargos": "0", "diferenca": "0", "gasto": "20948.65"}, {"mes": "2026-10", "cliente": "Tokio Seguros", "tipo": "seguradora", "carros": "4", "vr_cia": "25527.95", "vr_part": "0", "orcado": "25527.95", "faturado": "25284.73", "encargos": "-243.22", "diferenca": "0", "gasto": "3294.69"}, {"mes": "2026-10", "cliente": "Bradesco Auto/RE", "tipo": "seguradora", "carros": "1", "vr_cia": "4250.99", "vr_part": "0", "orcado": "4250.99", "faturado": "4243.97", "encargos": "-7.02", "diferenca": "0", "gasto": "0"}], "contas_atraso": [{"id": "1", "cs": "254026", "nf": "1218335", "fornecedor": "Vigorito", "emissao": "2026-07-16", "vencimento": "2026-09-14", "valor": "424.04", "boleto": "1218335/2", "cartorio": "nao"}, {"id": "2", "cs": "328726", "nf": "242914", "fornecedor": "Savol", "emissao": "2026-09-14", "vencimento": "2026-10-14", "valor": "600.41", "boleto": "242914/01", "cartorio": "nao"}, {"id": "3", "cs": "328626", "nf": "242918", "fornecedor": "Savol", "emissao": "2026-09-14", "vencimento": "2026-10-14", "valor": "702.70", "boleto": "242918/01", "cartorio": "nao"}, {"id": "4", "cs": "255326", "nf": "1128708", "fornecedor": "Vigorito", "emissao": "2026-07-17", "vencimento": "2026-09-15", "valor": "1096.81", "boleto": "1218708/02", "cartorio": "sim"}, {"id": "5", "cs": "255326", "nf": "1128708", "fornecedor": "Vigorito", "emissao": "2026-07-17", "vencimento": "2026-10-15", "valor": "1096.81", "boleto": "1218708/03", "cartorio": "nao"}, {"id": "6", "cs": "301626", "nf": "25638", "fornecedor": "Atri Comercial", "emissao": "2026-08-17", "vencimento": "2026-10-16", "valor": "835.31", "boleto": "25638-02/3", "cartorio": "sim"}, {"id": "7", "cs": "329426", "nf": "243025", "fornecedor": "Savol", "emissao": "2026-09-16", "vencimento": "2026-10-16", "valor": "404.20", "boleto": "243025/01", "cartorio": "nao"}, {"id": "8", "cs": "328926", "nf": "91201", "fornecedor": "Ortovel", "emissao": "2026-09-16", "vencimento": "2026-10-16", "valor": "1334.59", "boleto": "91201-01/3", "cartorio": "sim"}, {"id": "9", "cs": "221826", "nf": "174602", "fornecedor": "Caraiga Veículos", "emissao": "2026-06-19", "vencimento": "2026-09-17", "valor": "486.07", "boleto": "174602/03", "cartorio": "nao"}, {"id": "10", "cs": "329626", "nf": "29764", "fornecedor": "Shogun Veículos", "emissao": "2026-09-17", "vencimento": "2026-10-17", "valor": "2907.74", "boleto": "29764/01", "cartorio": "nao"}, {"id": "11", "cs": "304726", "nf": "409536", "fornecedor": "New Veículos e Peças", "emissao": "2026-08-21", "vencimento": "2026-10-20", "valor": "852.47", "boleto": "409635-02/3", "cartorio": "nao"}, {"id": "12", "cs": "304626", "nf": "393910", "fornecedor": "KOI Veículos e Peças", "emissao": "2026-08-21", "vencimento": "2026-10-20", "valor": "2924.00", "boleto": "393910-02/3", "cartorio": "nao"}, {"id": "13", "cs": "223426", "nf": "606653", "fornecedor": "Caraiga Veículos", "emissao": "2026-06-23", "vencimento": "2026-09-21", "valor": "1763.34", "boleto": "606653/03", "cartorio": "nao"}, {"id": "14", "cs": "341826", "nf": "414906", "fornecedor": "New Veículos e Peças", "emissao": "2026-09-21", "vencimento": "2026-10-21", "valor": "724.94", "boleto": "414906-01/3", "cartorio": "nao"}, {"id": "15", "cs": "223426", "nf": "606653", "fornecedor": "Caraiga Veículos", "emissao": "2026-06-23", "vencimento": "2026-10-21", "valor": "1763.34", "boleto": "606653/04", "cartorio": "nao"}, {"id": "16", "cs": "223426", "nf": "606653", "fornecedor": "Caraiga Veículos", "emissao": "2026-06-23", "vencimento": "2026-08-24", "valor": "1763.34", "boleto": "606653/02", "cartorio": "nao"}, {"id": "17", "cs": "198526", "nf": "1209647", "fornecedor": "Vigorito", "emissao": "2026-05-26", "vencimento": "2026-08-24", "valor": "844.88", "boleto": "120964703", "cartorio": "sim"}, {"id": "18", "cs": "308626", "nf": "110294", "fornecedor": "Vecol Veículos", "emissao": "2026-08-25", "vencimento": "2026-09-24", "valor": "718.67", "boleto": "110294/01", "cartorio": "nao"}, {"id": "19", "cs": "188526", "nf": "1209857", "fornecedor": "Vigorito", "emissao": "2026-05-27", "vencimento": "2026-08-25", "valor": "797.73", "boleto": "1209857/03", "cartorio": "sim"}, {"id": "20", "cs": "349226", "nf": "397695", "fornecedor": "KOI Veículos e Peças", "emissao": "2026-09-28", "vencimento": "2026-10-28", "valor": "1458.65", "boleto": "397695-01/3", "cartorio": "nao"}, {"id": "21", "cs": "278426", "nf": "1061", "fornecedor": "Peck Auto Peças", "emissao": "2026-07-30", "vencimento": "2026-10-28", "valor": "1351.67", "boleto": "1061C", "cartorio": "nao"}, {"id": "22", "cs": "349426", "nf": "569962", "fornecedor": "Honda Daitan", "emissao": "2026-09-28", "vencimento": "2026-10-28", "valor": "672.42", "boleto": "569962-01", "cartorio": "nao"}, {"id": "23", "cs": "240226", "nf": "608075", "fornecedor": "Caraiga Veículos", "emissao": "2026-07-01", "vencimento": "2026-09-29", "valor": "483.27", "boleto": "60807503", "cartorio": "nao"}, {"id": "24", "cs": "349926", "nf": "416591", "fornecedor": "New Veículos e Peças", "emissao": "2026-09-29", "vencimento": "2026-10-29", "valor": "516.26", "boleto": "416591-01/3", "cartorio": "nao"}, {"id": "25", "cs": "350226", "nf": "141972", "fornecedor": "ATR Veículos", "emissao": "2026-09-29", "vencimento": "2026-10-29", "valor": "4993.85", "boleto": "141972-01/3", "cartorio": "nao"}, {"id": "26", "cs": "348826", "nf": "431333", "fornecedor": "Comeri Litoral", "emissao": "2026-09-29", "vencimento": "2026-10-29", "valor": "1724.00", "boleto": "431333/1", "cartorio": "nao"}, {"id": "27", "cs": "348726", "nf": "65634", "fornecedor": "CB Autos Honda", "emissao": "2026-09-29", "vencimento": "2026-10-29", "valor": "2497.68", "boleto": "65634-01", "cartorio": "nao"}, {"id": "28", "cs": "240226", "nf": "608075", "fornecedor": "Caraiga Veículos", "emissao": "2026-07-01", "vencimento": "2026-08-30", "valor": "483.27", "boleto": "60807502", "cartorio": "nao"}, {"id": "29", "cs": "311726", "nf": "394861", "fornecedor": "Ontake Veículos", "emissao": "2026-08-31", "vencimento": "2026-10-30", "valor": "244.02", "boleto": "", "cartorio": "nao"}, {"id": "30", "cs": "351226", "nf": "431534", "fornecedor": "Comeri Litoral", "emissao": "2026-09-30", "vencimento": "2026-10-30", "valor": "738.00", "boleto": "431534/1", "cartorio": "nao"}], "dividas": [{"id": "1", "grupo": "Bancos", "credor": "CILIA", "dia": "16", "atraso": "0", "parcela_atual": "4", "parcela_total": "", "out_26": "0", "nov_26": "17548.67", "dez_26": "17548.67", "jan_27": "17548.67", "fev_27": "0", "saldo": "0"}, {"id": "2", "grupo": "Bancos", "credor": "Giro Sicredi", "dia": "17", "atraso": "0", "parcela_atual": "23", "parcela_total": "36", "out_26": "0", "nov_26": "2405.00", "dez_26": "2405.00", "jan_27": "2405.00", "fev_27": "2405.00", "saldo": "24050.00"}, {"id": "3", "grupo": "Bancos", "credor": "Pronampe Prata", "dia": "25", "atraso": "3170.00", "parcela_atual": "30", "parcela_total": "49", "out_26": "0", "nov_26": "3170.00", "dez_26": "3170.00", "jan_27": "3170.00", "fev_27": "3170.00", "saldo": "47550.00"}, {"id": "4", "grupo": "Bancos", "credor": "Rotativo Sicredi", "dia": "29", "atraso": "0", "parcela_atual": "8", "parcela_total": "36", "out_26": "0", "nov_26": "3077.00", "dez_26": "3077.00", "jan_27": "3077.00", "fev_27": "3077.00", "saldo": "76925.00"}, {"id": "5", "grupo": "Bancos", "credor": "Limite Itaú", "dia": "", "atraso": "10200.00", "parcela_atual": "", "parcela_total": "", "out_26": "0", "nov_26": "0", "dez_26": "0", "jan_27": "0", "fev_27": "0", "saldo": "0"}, {"id": "6", "grupo": "Bancos", "credor": "Limite Caixa AF", "dia": "", "atraso": "4000.00", "parcela_atual": "", "parcela_total": "", "out_26": "0", "nov_26": "0", "dez_26": "0", "jan_27": "0", "fev_27": "0", "saldo": "0"}, {"id": "7", "grupo": "Bancos", "credor": "Empréstimo Marco", "dia": "", "atraso": "60000.00", "parcela_atual": "", "parcela_total": "", "out_26": "0", "nov_26": "0", "dez_26": "0", "jan_27": "0", "fev_27": "0", "saldo": "0"}, {"id": "8", "grupo": "Material", "credor": "Empréstimo Caixa JR (Chiquinho)", "dia": "24", "atraso": "35000.00", "parcela_atual": "10", "parcela_total": "10", "out_26": "0", "nov_26": "0", "dez_26": "0", "jan_27": "0", "fev_27": "0", "saldo": "0"}, {"id": "9", "grupo": "Material", "credor": "Sicredi JR (Chiquinho)", "dia": "3", "atraso": "0", "parcela_atual": "3", "parcela_total": "10", "out_26": "1158.24", "nov_26": "1158.24", "dez_26": "1158.24", "jan_27": "1158.24", "fev_27": "1158.24", "saldo": "3474.72"}, {"id": "10", "grupo": "Tributos", "credor": "INSS Prata set-nov/25", "dia": "30", "atraso": "0", "parcela_atual": "11", "parcela_total": "33", "out_26": "0", "nov_26": "535.00", "dez_26": "535.00", "jan_27": "535.00", "fev_27": "535.00", "saldo": "10165.00"}, {"id": "11", "grupo": "Tributos", "credor": "INSS Prata abr-jul/25", "dia": "30", "atraso": "0", "parcela_atual": "15", "parcela_total": "49", "out_26": "0", "nov_26": "556.00", "dez_26": "556.00", "jan_27": "556.00", "fev_27": "556.00", "saldo": "17236.00"}, {"id": "12", "grupo": "Tributos", "credor": "INSS Prata jan-ago/26", "dia": "30", "atraso": "0", "parcela_atual": "3", "parcela_total": "60", "out_26": "0", "nov_26": "892.70", "dez_26": "892.70", "jan_27": "892.70", "fev_27": "892.70", "saldo": "48168.00"}, {"id": "13", "grupo": "Tributos", "credor": "Simples Prata", "dia": "30", "atraso": "0", "parcela_atual": "3", "parcela_total": "60", "out_26": "0", "nov_26": "4692.91", "dez_26": "4692.91", "jan_27": "4692.91", "fev_27": "4692.91", "saldo": "253368.00"}, {"id": "14", "grupo": "Tributos", "credor": "Simples Silver", "dia": "38", "atraso": "0", "parcela_atual": "3", "parcela_total": "38", "out_26": "0", "nov_26": "303.17", "dez_26": "303.17", "jan_27": "303.17", "fev_27": "303.17", "saldo": "10004.61"}, {"id": "15", "grupo": "Pessoal", "credor": "FGI 2 JR", "dia": "12", "atraso": "0", "parcela_atual": "30", "parcela_total": "39", "out_26": "0", "nov_26": "1973.04", "dez_26": "1973.04", "jan_27": "1973.04", "fev_27": "1973.04", "saldo": "11838.24"}, {"id": "16", "grupo": "Pessoal", "credor": "FGI 1 JR", "dia": "6", "atraso": "0", "parcela_atual": "32", "parcela_total": "39", "out_26": "0", "nov_26": "1973.04", "dez_26": "1973.04", "jan_27": "1973.04", "fev_27": "1973.04", "saldo": "7892.16"}, {"id": "17", "grupo": "Pessoal", "credor": "Sicredi parcelado", "dia": "3", "atraso": "0", "parcela_atual": "3", "parcela_total": "10", "out_26": "1737.35", "nov_26": "1737.35", "dez_26": "1737.35", "jan_27": "1737.35", "fev_27": "1737.35", "saldo": "5212.05"}, {"id": "18", "grupo": "Frezza", "credor": "Pronampe IF", "dia": "27", "atraso": "27912.00", "parcela_atual": "28", "parcela_total": "45", "out_26": "", "nov_26": "", "dez_26": "", "jan_27": "", "fev_27": "", "saldo": "46800.00"}, {"id": "19", "grupo": "Frezza", "credor": "Simples Frezza", "dia": "30", "atraso": "0", "parcela_atual": "41", "parcela_total": "120", "out_26": "", "nov_26": "", "dez_26": "", "jan_27": "", "fev_27": "", "saldo": "284000.00"}, {"id": "20", "grupo": "Frezza", "credor": "INSS Frezza", "dia": "30", "atraso": "0", "parcela_atual": "40", "parcela_total": "60", "out_26": "", "nov_26": "", "dez_26": "", "jan_27": "", "fev_27": "", "saldo": "34000.00"}]};
+  const calcs = {}, draws = {}, cache = {}, listeners = [];
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const get = (id) => {
+    if (id in cache) return cache[id];
+    if (DATA[id]) return (cache[id] = DATA[id]);
+    const c = calcs[id];
+    if (!c) return null;
+    return (cache[id] = c.fn(...c.inputs.map(get)));
+  };
+  const visible = (el) => !el.closest('[hidden]');
+  const runDraws = () => {
+    document.querySelectorAll('[data-draw]').forEach((el) => {
+      const fn = draws[el.dataset.draw];
+      if (fn && visible(el)) { try { fn(el); } catch (e) { console.error(e); } }
+    });
+    listeners.forEach((f) => { try { f(); } catch (e) { console.error(e); } });
+  };
+  window.dash = {
+    colors: ['--s1','--s2','--s3','--s4'].map((v) => 'var(' + v + ')'),
+    data(id) { const d = get(id); return d ? { status: 'ok', data: d, rows: d, columns: d[0] ? Object.keys(d[0]) : [], meta: [] } : { status: 'missing', data: [] }; },
+    calc(id, spec) { calcs[id] = spec; },
+    loader() {},
+    draw(name, fn) { if (typeof fn === 'function') draws[name] = fn; else if (!fn) runDraws(); },
+    onData(fn) { listeners.push(fn); },
+    setLink(name) { history.replaceState(null, '', '#' + name); runDraws(); },
+    params() { return {}; }, setParams() {}, resetParams() {}, refresh() {}
+  };
+  document.addEventListener('DOMContentLoaded', runDraws);
+  let t; addEventListener('resize', () => { clearTimeout(t); t = setTimeout(runDraws, 150); });
+})();
+</script>
+</head>
+<body>
+<div id="dash-root">
+<style>
+.pp{display:flex;flex-direction:column;gap:var(--cds-gap-lg);font-family:var(--font-anthropic-sans)}
+.pp-head h1{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);margin:0;text-wrap:balance}
+.pp-head p{margin:var(--cds-gap-xs) 0 0;color:var(--color-fg-muted);max-width:72ch}
+.pp b{font-weight:600;color:var(--color-fg)}
+.pp-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr));gap:var(--cds-gap-md)}
+.pp-tile,.pp-card{background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);min-width:0}
+.pp-tile{padding:var(--cds-pad-md);display:flex;flex-direction:column;gap:var(--cds-gap-xs)}
+.pp-tile .lb,.pp-tile .nt{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.pp-tile .v{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);font-variant-numeric:tabular-nums}
+.pp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:var(--cds-gap-md)}
+.pp-card{padding:var(--cds-pad-lg);display:flex;flex-direction:column;gap:var(--cds-gap-sm)}
+.pp-card h2{font-size:var(--cds-font-size-heading);font-weight:var(--cds-font-weight-medium);margin:0}
+.pp-card .note{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin:0}
+.pp-legend{display:flex;flex-wrap:wrap;gap:var(--cds-gap-md);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.pp-legend span{display:inline-flex;align-items:center;gap:var(--cds-gap-xs)}
+.pp-sw{width:.7rem;height:.7rem;border-radius:2px;background:var(--cds-chart-muted)}
+.pp-chart{position:relative;min-height:200px}
+.pp-chart text{font-size:var(--cds-font-size-caption);fill:var(--color-fg-muted);font-variant-numeric:tabular-nums}
+.pp-chart text.nm{fill:var(--color-fg)}
+.pp-tip{position:absolute;pointer-events:none;background:var(--cds-surface-popover);border:1px solid var(--cds-border);border-radius:var(--cds-radius);box-shadow:var(--cds-shadow-popover);padding:var(--cds-pad-xs) var(--cds-pad-sm);font-size:var(--cds-font-size-caption);white-space:nowrap;z-index:2}
+.pp-tip .t{color:var(--cds-text-secondary)}
+.pp-tablewrap{overflow-x:auto}
+.pp-table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:var(--cds-font-size-body)}
+.pp-table th{text-align:right;font-weight:var(--cds-font-weight-medium);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);padding:var(--cds-pad-xs) var(--cds-pad-sm);border-bottom:1px solid var(--color-border-line);white-space:nowrap}
+.pp-table td{text-align:right;padding:var(--cds-pad-sm);border-bottom:1px solid var(--color-border-line);white-space:nowrap}
+.pp-table th:first-child,.pp-table td:first-child,.pp-table th:last-child,.pp-table td:last-child{text-align:left}
+.pp-table tfoot td{font-weight:600;border-bottom:0}
+.pp-table td.ok{color:var(--color-ok)}.pp-table td.warn{color:var(--color-warn)}.pp-table td.bad{color:var(--color-bad)}
+.pp-chip{display:inline-block;padding:0 .55em;border-radius:999px;border:1px solid currentColor;font-size:var(--cds-font-size-caption)}
+.pp-chip.bad{color:var(--color-bad)}.pp-chip.warn{color:var(--color-warn)}
+.pp-def{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);max-width:80ch;margin:0}
+.pp-tabs{display:flex;gap:var(--cds-gap-xs);border-bottom:1px solid var(--color-border-line);flex-wrap:wrap}
+.pp-tabs button{font:inherit;font-size:var(--cds-font-size-body);background:none;border:0;border-bottom:2px solid transparent;color:var(--color-fg-muted);padding:var(--cds-pad-sm) var(--cds-pad-md);cursor:pointer;margin-bottom:-1px}
+.pp-tabs button[aria-selected=true]{color:var(--color-fg);border-bottom-color:var(--color-fg);font-weight:var(--cds-font-weight-medium)}
+.pp-tabs button:focus-visible{outline:2px solid var(--color-fg);outline-offset:2px}
+.pp-panel{display:flex;flex-direction:column;gap:var(--cds-gap-lg)}
+.pp-tile.alert .v{color:var(--color-bad)}
+.pp-chart.tall{min-height:420px}
+.pp-chart.short{min-height:150px}
+[data-dash-source-state=empty]{color:transparent}
+[data-dash-source-state=refreshing]{opacity:.5;transition:opacity var(--cds-dur-slow)}
+</style>
+
+<div class="pp">
+  <nav class="pp-tabs" role="tablist" aria-label="Páginas do painel">
+    <button type="button" role="tab" id="tab-resultado" data-tab="resultado" aria-selected="true">Resultado do mês</button>
+    <button type="button" role="tab" id="tab-atraso" data-tab="atraso" aria-selected="false">Contas em atraso</button>
+    <button type="button" role="tab" id="tab-dividas" data-tab="dividas" aria-selected="false">Dívidas</button>
+  </nav>
+
+  <section class="pp-panel" id="resultado" role="tabpanel" aria-labelledby="tab-resultado">
+  <header class="pp-head" id="topo">
+    <h1>Pintura de Prata · resultado de <span data-draw="kpi" data-source="totais" data-field="mes_label" class="dash-skeleton">—</span></h1>
+    <p>Margem de contribuição de <b data-draw="kpi" data-source="totais" data-field="margem" data-fmt="pct">—</b> sobre o faturado. A menor margem foi a de <b data-draw="kpi" data-source="totais" data-field="pior_cliente">—</b>, com <b data-draw="kpi" data-source="totais" data-field="pior_margem" data-fmt="pct">—</b>.</p>
+  </header>
+
+  <section class="pp-tiles" aria-label="Indicadores do mês">
+    <div class="pp-tile">
+      <span class="lb">Faturado</span>
+      <span class="v dash-skeleton" data-draw="kpi" data-source="totais" data-field="faturado" data-fmt="brl0">—</span>
+      <span class="nt"><span data-draw="kpi" data-source="totais" data-field="carros" data-fmt="int">—</span> carros entregues</span>
+    </div>
+    <div class="pp-tile">
+      <span class="lb">Margem de contribuição</span>
+      <span class="v dash-skeleton" data-draw="kpi" data-source="totais" data-field="resultado" data-fmt="brl0">—</span>
+      <span class="nt"><span data-draw="kpi" data-source="totais" data-field="margem" data-fmt="pct">—</span> do faturado</span>
+    </div>
+    <div class="pp-tile">
+      <span class="lb">Gasto com peças e material</span>
+      <span class="v dash-skeleton" data-draw="kpi" data-source="totais" data-field="gasto" data-fmt="brl0">—</span>
+      <span class="nt"><span data-draw="kpi" data-source="totais" data-field="pct_gasto" data-fmt="pct">—</span> do faturado</span>
+    </div>
+    <div class="pp-tile">
+      <span class="lb">Ticket médio</span>
+      <span class="v dash-skeleton" data-draw="kpi" data-source="totais" data-field="ticket" data-fmt="brl0">—</span>
+      <span class="nt">faturado por carro entregue</span>
+    </div>
+    <div class="pp-tile">
+      <span class="lb">Descontos e encargos</span>
+      <span class="v dash-skeleton" data-draw="kpi" data-source="totais" data-field="descontos" data-fmt="brl0">—</span>
+      <span class="nt"><span data-draw="kpi" data-source="totais" data-field="pct_desc" data-fmt="pct">—</span> do orçado ficou de fora</span>
+    </div>
+  </section>
+
+  <section class="pp-grid">
+    <div class="pp-card" id="composicao">
+      <h2>Para onde vai cada real faturado</h2>
+      <p class="note">Faturado por cliente, dividido entre margem e gasto. O número no fim da barra é a margem.</p>
+      <div class="pp-legend"><span><i class="pp-sw" data-c="0"></i>Margem de contribuição</span><span><i class="pp-sw"></i>Gasto com peças e material</span></div>
+      <div class="pp-chart" data-draw="composicao" data-source="por_cliente"></div>
+    </div>
+    <div class="pp-card" id="mix">
+      <h2>Volume de carros × faturamento</h2>
+      <p class="note">Participação de cada cliente no total de carros entregues e no total faturado.</p>
+      <div class="pp-legend"><span><i class="pp-sw"></i>% dos carros</span><span><i class="pp-sw" data-c="0"></i>% do faturado</span></div>
+      <div class="pp-chart" data-draw="mix" data-source="por_cliente"></div>
+    </div>
+  </section>
+
+  <section class="pp-card" id="detalhe">
+    <h2>Resultado por seguradora</h2>
+    <p class="note">Particulares e seguradoras, do maior para o menor faturamento. Alertas apontam OSs para conferir.</p>
+    <div class="pp-tablewrap">
+      <table class="pp-table" data-source="por_cliente" data-row-key="cliente">
+        <thead><tr>
+          <th data-field="cliente">Cliente</th>
+          <th data-field="carros">Carros</th>
+          <th data-field="faturado">Faturado</th>
+          <th data-field="gasto">Gasto</th>
+          <th data-field="resultado">Margem (R$)</th>
+          <th data-field="margem">Margem (%)</th>
+          <th data-field="ticket">Ticket médio</th>
+          <th data-field="alerta">Alerta</th>
+        </tr></thead>
+        <tbody data-draw="tabela"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="pp-def">Margem de contribuição = faturado − gasto lançado nas OSs (peças e material). Não inclui mão de obra, custos fixos nem impostos, então não é o lucro líquido. O relatório da oficina calcula o resultado sobre o valor orçado; aqui o cálculo é sobre o faturado, depois de descontos e encargos. Dados do relatório "Resultado Seguradora" por data de entrega.</p>
+  </section>
+
+  <section class="pp-panel" id="atraso" role="tabpanel" aria-labelledby="tab-atraso" hidden>
+    <header class="pp-head">
+      <h1>Contas a pagar em atraso</h1>
+      <p><b data-draw="kpi" data-source="atraso_totais" data-field="total" data-fmt="brl">—</b> em <b data-draw="kpi" data-source="atraso_totais" data-field="n" data-fmt="int">—</b> boletos de fornecedores vencidos. Desse valor, <b data-draw="kpi" data-source="atraso_totais" data-field="cartorio" data-fmt="brl">—</b> já está em cartório. Dias de atraso contados até <span data-draw="refdate">—</span>, data do relatório.</p>
+    </header>
+
+    <section class="pp-tiles" aria-label="Indicadores de atraso">
+      <div class="pp-tile">
+        <span class="lb">Total em atraso</span>
+        <span class="v dash-skeleton" data-draw="kpi" data-source="atraso_totais" data-field="total" data-fmt="brl0">—</span>
+        <span class="nt"><span data-draw="kpi" data-source="atraso_totais" data-field="n" data-fmt="int">—</span> boletos de <span data-draw="kpi" data-source="atraso_totais" data-field="n_fornecedores" data-fmt="int">—</span> fornecedores</span>
+      </div>
+      <div class="pp-tile alert">
+        <span class="lb">Em cartório</span>
+        <span class="v dash-skeleton" data-draw="kpi" data-source="atraso_totais" data-field="cartorio" data-fmt="brl0">—</span>
+        <span class="nt"><span data-draw="kpi" data-source="atraso_totais" data-field="n_cartorio" data-fmt="int">—</span> boletos protestados</span>
+      </div>
+      <div class="pp-tile">
+        <span class="lb">Vencido há mais de 60 dias</span>
+        <span class="v dash-skeleton" data-draw="kpi" data-source="atraso_totais" data-field="acima60" data-fmt="brl0">—</span>
+        <span class="nt"><span data-draw="kpi" data-source="atraso_totais" data-field="n_acima60" data-fmt="int">—</span> boletos</span>
+      </div>
+      <div class="pp-tile">
+        <span class="lb">Maior credor</span>
+        <span class="v dash-skeleton" data-draw="kpi" data-source="atraso_totais" data-field="maior_fornecedor">—</span>
+        <span class="nt"><span data-draw="kpi" data-source="atraso_totais" data-field="maior_valor" data-fmt="brl">—</span> em aberto</span>
+      </div>
+    </section>
+
+    <section class="pp-grid">
+      <div class="pp-card" id="por-fornecedor">
+        <h2>Atraso por fornecedor</h2>
+        <p class="note">Valor vencido de cada fornecedor, com a parte em cartório destacada.</p>
+        <div class="pp-legend"><span><i class="pp-sw" data-c="bad"></i>Em cartório</span><span><i class="pp-sw" data-c="0"></i>Vencido, fora do cartório</span></div>
+        <div class="pp-chart tall" data-draw="fornecedores" data-source="atraso_fornecedor"></div>
+      </div>
+      <div class="pp-card" id="por-faixa">
+        <h2>Há quanto tempo está vencido</h2>
+        <p class="note">Valor em aberto por faixa de dias de atraso.</p>
+        <div class="pp-chart short" data-draw="faixas" data-source="atraso_faixas"></div>
+      </div>
+    </section>
+
+    <section class="pp-card" id="boletos">
+      <h2>Boletos em atraso</h2>
+      <p class="note">Do mais antigo para o mais recente.</p>
+      <div class="pp-tablewrap">
+        <table class="pp-table" data-source="atraso_lista" data-row-key="id">
+          <thead><tr>
+            <th data-field="fornecedor">Fornecedor</th>
+            <th data-field="nf">NF</th>
+            <th data-field="vencimento">Vencimento</th>
+            <th data-field="dias">Dias de atraso</th>
+            <th data-field="valor">Valor</th>
+            <th data-field="situacao">Situação</th>
+          </tr></thead>
+          <tbody data-draw="boletos"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <p class="pp-def">Dados do relatório "Despesa a pagar" do sistema da oficina, com vencimentos de 01/07/2026 a 30/10/2026. Os boletos em cartório foram os marcados em laranja no relatório impresso.</p>
+  </section>
+
+  <section class="pp-panel" id="dividas" role="tabpanel" aria-labelledby="tab-dividas" hidden>
+    <header class="pp-head">
+      <h1>Dívidas e parcelamentos</h1>
+      <p><b data-draw="kpi" data-source="div_totais" data-field="atraso" data-fmt="brl">—</b> já vencidos. As parcelas somam <b data-draw="kpi" data-source="div_totais" data-field="mensal_nov" data-fmt="brl">—</b> por mês até janeiro e caem para <b data-draw="kpi" data-source="div_totais" data-field="mensal_fev" data-fmt="brl">—</b> em fevereiro. As parcelas de novembro equivalem a <b data-draw="kpi" data-source="div_totais" data-field="pct_margem" data-fmt="pct">—</b> da margem de contribuição de outubro.</p>
+    </header>
+
+    <section class="pp-tiles" aria-label="Indicadores de dívida">
+      <div class="pp-tile alert">
+        <span class="lb">Dívidas em atraso</span>
+        <span class="v dash-skeleton" data-draw="kpi" data-source="div_totais" data-field="atraso" data-fmt="brl0">—</span>
+        <span class="nt"><span data-draw="kpi" data-source="div_totais" data-field="n_atraso" data-fmt="int">—</span> credores com valor vencido</span>
+      </div>
+      <div class="pp-tile">
+        <span class="lb">Parcelas por mês</span>
+        <span class="v dash-skeleton" data-draw="kpi" data-source="div_totais" data-field="mensal_nov" data-fmt="brl0">—</span>
+        <span class="nt">de novembro a janeiro, sem as parcelas da Frezza</span>
+      </div>
+      <div class="pp-tile">
+        <span class="lb">Saldo a vencer depois de fevereiro</span>
+        <span class="v dash-skeleton" data-draw="kpi" data-source="div_totais" data-field="saldo" data-fmt="brl0">—</span>
+        <span class="nt">parcelamentos e empréstimos</span>
+      </div>
+      <div class="pp-tile">
+        <span class="lb">Dívida total</span>
+        <span class="v dash-skeleton" data-draw="kpi" data-source="div_totais" data-field="total" data-fmt="brl0">—</span>
+        <span class="nt">atraso, parcelas de nov a fev e saldo</span>
+      </div>
+    </section>
+
+    <section class="pp-grid">
+      <div class="pp-card" id="parcelas-mes">
+        <h2>Parcelas mês a mês</h2>
+        <p class="note">Quanto sai por mês em parcelas, por grupo. A Frezza não tem os valores mensais na planilha.</p>
+        <div class="pp-legend"><span><i class="pp-sw" data-c="0"></i>Bancos</span><span><i class="pp-sw" data-c="1"></i>Material</span><span><i class="pp-sw" data-c="2"></i>Tributos</span><span><i class="pp-sw" data-c="3"></i>Pessoal</span></div>
+        <div class="pp-chart short" data-draw="div-meses" data-source="div_meses"></div>
+      </div>
+      <div class="pp-card" id="div-grupo">
+        <h2>Dívida por grupo</h2>
+        <p class="note">Valor já vencido e valor a vencer (parcelas de nov a fev mais o saldo).</p>
+        <div class="pp-legend"><span><i class="pp-sw" data-c="bad"></i>Em atraso</span><span><i class="pp-sw" data-c="0"></i>A vencer</span></div>
+        <div class="pp-chart" data-draw="div-grupos" data-source="div_grupos"></div>
+      </div>
+    </section>
+
+    <section class="pp-card" id="div-lista">
+      <h2>Todas as dívidas</h2>
+      <p class="note">Na ordem da planilha. Parcela mensal é o valor de novembro.</p>
+      <div class="pp-tablewrap">
+        <table class="pp-table" data-source="div_lista" data-row-key="id">
+          <thead><tr>
+            <th data-field="credor">Dívida</th>
+            <th data-field="grupo">Grupo</th>
+            <th data-field="atraso">Em atraso</th>
+            <th data-field="mensal">Parcela mensal</th>
+            <th data-field="parcelas">Parcela</th>
+            <th data-field="saldo">Saldo após fev</th>
+            <th data-field="situacao">Situação</th>
+          </tr></thead>
+          <tbody data-draw="div-tabela"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <p class="pp-def">Dados da planilha de dívidas da oficina, transcrita da foto enviada em 04/11/2026. O saldo é o que resta depois das parcelas de fevereiro de 2027.</p>
+  </section>
+</div>
+
+<script>
+dash.calc('por_cliente', {
+  inputs: ['resultados'],
+  title: 'Resultado por cliente',
+  description: 'Faturado menos gasto de cada seguradora ou particular no mês mais recente.',
+  fn: (resultados) => {
+    const n = (x) => Number(x) || 0;
+    const mes = resultados.reduce((m, r) => (r.mes > m ? r.mes : m), '');
+    const doMes = resultados.filter((r) => r.mes === mes);
+    const fatTotal = doMes.reduce((s, r) => s + n(r.faturado), 0);
+    const carrosTotal = doMes.reduce((s, r) => s + n(r.carros), 0);
+    return doMes.map((r) => {
+      const faturado = n(r.faturado), gasto = n(r.gasto), carros = n(r.carros);
+      const resultado = Math.round((faturado - gasto) * 100) / 100;
+      const margem = faturado ? resultado / faturado : 0;
+      const alerta = gasto === 0 ? 'Gasto zerado' : margem < 0.5 ? 'Margem baixa' : '';
+      return { cliente: r.cliente, carros, faturado, gasto, resultado, margem,
+        ticket: carros ? faturado / carros : 0,
+        share_fat: fatTotal ? faturado / fatTotal : 0,
+        share_carros: carrosTotal ? carros / carrosTotal : 0, alerta };
+    }).sort((a, b) => b.faturado - a.faturado);
+  }
+});
+
+dash.calc('totais', {
+  inputs: ['resultados'],
+  title: 'Totais do mês',
+  description: 'Somas do mês mais recente, margem sobre o faturado e o cliente de menor margem.',
+  fn: (resultados) => {
+    const n = (x) => Number(x) || 0;
+    const meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+    const mes = resultados.reduce((m, r) => (r.mes > m ? r.mes : m), '');
+    const rs = resultados.filter((r) => r.mes === mes);
+    const soma = (k) => rs.reduce((s, r) => s + n(r[k]), 0);
+    const faturado = soma('faturado'), gasto = soma('gasto'), carros = soma('carros'), orcado = soma('orcado');
+    const descontos = -(soma('encargos') + soma('diferenca'));
+    const resultado = faturado - gasto;
+    const porMargem = rs.map((r) => ({ c: r.cliente, m: n(r.faturado) ? (n(r.faturado) - n(r.gasto)) / n(r.faturado) : 0 }))
+      .sort((a, b) => a.m - b.m);
+    return [{
+      mes, mes_label: meses[Number(mes.slice(5, 7)) - 1] + ' de ' + mes.slice(0, 4),
+      faturado, gasto, resultado, carros, orcado, descontos,
+      margem: faturado ? resultado / faturado : 0,
+      ticket: carros ? faturado / carros : 0,
+      pct_gasto: faturado ? gasto / faturado : 0,
+      pct_desc: orcado ? descontos / orcado : 0,
+      pior_cliente: porMargem[0] ? porMargem[0].c : '',
+      pior_margem: porMargem[0] ? porMargem[0].m : 0
+    }];
+  }
+});
+
+window.ppFmt = {
+  brl0: (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v),
+  brl: (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v),
+  pct: (v) => new Intl.NumberFormat('pt-BR', { style: 'percent', maximumFractionDigits: 1 }).format(v),
+  int: (v) => new Intl.NumberFormat('pt-BR').format(v),
+  text: (v) => String(v)
+};
+
+document.querySelectorAll('.pp-sw[data-c]').forEach((s) => {
+  s.style.background = s.dataset.c === 'bad' ? 'var(--cds-chart-status-critical)' : dash.colors[Number(s.dataset.c)];
+});
+
+window.ppShowTab = (name) => {
+  const panels = document.querySelectorAll('.pp-panel');
+  if (![...panels].some((p) => p.id === name)) return false;
+  panels.forEach((p) => { p.hidden = p.id !== name; });
+  document.querySelectorAll('.pp-tabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
+  return true;
+};
+document.querySelectorAll('.pp-tabs [data-tab]').forEach((b) => {
+  b.addEventListener('click', () => { if (window.ppShowTab(b.dataset.tab)) dash.setLink(b.dataset.tab); });
+});
+window.ppShowTab(location.hash.slice(1));
+
+dash.calc('atraso_lista', {
+  inputs: ['contas_atraso'],
+  title: 'Boletos com dias de atraso',
+  description: 'Cada boleto vencido com os dias de atraso até a data do relatório (03/11/2026).',
+  fn: (contas_atraso) => {
+    const ref = Date.UTC(2026, 10, 3);
+    return contas_atraso.map((r) => {
+      const v = String(r.vencimento).slice(0, 10);
+      const dias = Math.round((ref - Date.UTC(Number(v.slice(0, 4)), Number(v.slice(5, 7)) - 1, Number(v.slice(8, 10)))) / 86400000);
+      return { id: String(r.id), fornecedor: r.fornecedor, nf: String(r.nf), vencimento: v, dias,
+        valor: Number(r.valor) || 0, situacao: r.cartorio === 'sim' ? 'Em cartório' : 'Vencido' };
+    }).sort((a, b) => b.dias - a.dias || b.valor - a.valor);
+  }
+});
+
+dash.calc('atraso_totais', {
+  inputs: ['atraso_lista'],
+  title: 'Totais em atraso',
+  description: 'Soma em atraso, parte em cartório, parte acima de 60 dias e o maior credor.',
+  fn: (atraso_lista) => {
+    const soma = (rs) => rs.reduce((s, r) => s + r.valor, 0);
+    const cart = atraso_lista.filter((r) => r.situacao === 'Em cartório');
+    const velho = atraso_lista.filter((r) => r.dias > 60);
+    const porForn = {};
+    atraso_lista.forEach((r) => { porForn[r.fornecedor] = (porForn[r.fornecedor] || 0) + r.valor; });
+    const maior = Object.entries(porForn).sort((a, b) => b[1] - a[1])[0] || ['', 0];
+    return [{ total: soma(atraso_lista), n: atraso_lista.length, n_fornecedores: Object.keys(porForn).length,
+      cartorio: soma(cart), n_cartorio: cart.length, acima60: soma(velho), n_acima60: velho.length,
+      maior_fornecedor: maior[0], maior_valor: maior[1] }];
+  }
+});
+
+dash.calc('atraso_fornecedor', {
+  inputs: ['atraso_lista'],
+  title: 'Atraso por fornecedor',
+  description: 'Valor vencido por fornecedor, separado entre em cartório e fora do cartório.',
+  fn: (atraso_lista) => {
+    const m = {};
+    atraso_lista.forEach((r) => {
+      const f = m[r.fornecedor] || (m[r.fornecedor] = { fornecedor: r.fornecedor, total: 0, cartorio: 0, demais: 0, boletos: 0 });
+      f.total += r.valor; f.boletos += 1;
+      if (r.situacao === 'Em cartório') f.cartorio += r.valor; else f.demais += r.valor;
+    });
+    return Object.values(m).sort((a, b) => b.total - a.total);
+  }
+});
+
+dash.calc('atraso_faixas', {
+  inputs: ['atraso_lista'],
+  title: 'Atraso por faixa de dias',
+  description: 'Valor e quantidade de boletos por tempo de atraso.',
+  fn: (atraso_lista) => {
+    const faixas = [['Até 30 dias', 0, 30], ['31 a 60 dias', 31, 60], ['61 a 90 dias', 61, 90], ['Mais de 90 dias', 91, 100000]];
+    return faixas.map(([faixa, a, b]) => {
+      const rs = atraso_lista.filter((r) => r.dias >= a && r.dias <= b);
+      return { faixa, valor: rs.reduce((s, r) => s + r.valor, 0), boletos: rs.length, min_dias: a };
+    });
+  }
+});
+
+dash.draw('refdate', (el) => { el.textContent = '03/11/2026'; });
+
+dash.draw('boletos', (tb) => {
+  const d = dash.data('atraso_lista');
+  tb.replaceChildren();
+  if (d.status !== 'ok') return;
+  const f = window.ppFmt;
+  for (const r of d.data) {
+    const tr = document.createElement('tr');
+    tr.dataset.key = r.id;
+    const cell = (txt, cls) => { const td = document.createElement('td'); td.textContent = txt; if (cls) td.className = cls; tr.appendChild(td); return td; };
+    cell(r.fornecedor);
+    cell(r.nf);
+    cell(r.vencimento.slice(8, 10) + '/' + r.vencimento.slice(5, 7) + '/' + r.vencimento.slice(0, 4));
+    cell(f.int(r.dias), r.dias > 60 ? 'bad' : r.dias > 30 ? 'warn' : '');
+    cell(f.brl(r.valor));
+    const td = cell('');
+    const s = document.createElement('span');
+    s.className = 'pp-chip' + (r.situacao === 'Em cartório' ? ' bad' : '');
+    s.textContent = r.situacao;
+    td.appendChild(s);
+    tb.appendChild(tr);
+  }
+});
+
+dash.draw('fornecedores', (el) => {
+  const d = dash.data('atraso_fornecedor');
+  if (d.status !== 'ok') { el.replaceChildren(); return; }
+  const f = window.ppFmt, rows = d.data;
+  window.ppBars(el, rows, [
+    { v: (r) => r.cartorio, color: 'var(--cds-chart-status-critical)', y: 6, h: 16, stack: true },
+    { v: (r) => r.demais, color: dash.colors[0], y: 6, h: 16, stack: true }
+  ], {
+    key: 'fornecedor', rowH: 28, max: d3.max(rows, (r) => r.total),
+    endLabel: (r) => f.brl0(r.total),
+    tip: (r) => ['Total ' + f.brl(r.total) + ' em ' + f.int(r.boletos) + (r.boletos === 1 ? ' boleto' : ' boletos'), 'Em cartório ' + f.brl(r.cartorio)]
+  });
+});
+
+dash.draw('faixas', (el) => {
+  const d = dash.data('atraso_faixas');
+  if (d.status !== 'ok') { el.replaceChildren(); return; }
+  const f = window.ppFmt, rows = d.data;
+  window.ppBars(el, rows, [
+    { v: (r) => r.valor, color: (r) => (r.min_dias > 60 ? 'var(--cds-chart-status-critical)' : dash.colors[0]), y: 8, h: 20 }
+  ], {
+    key: 'faixa', rowH: 36, max: d3.max(rows, (r) => r.valor) || 1,
+    endLabel: (r) => f.brl0(r.valor) + ' · ' + f.int(r.boletos) + (r.boletos === 1 ? ' boleto' : ' boletos'),
+    tip: (r) => [f.brl(r.valor), f.int(r.boletos) + (r.boletos === 1 ? ' boleto' : ' boletos')]
+  });
+});
+
+dash.draw('kpi', (el) => {
+  const d = dash.data(el.dataset.source);
+  const row = d.status === 'ok' && Array.isArray(d.data) ? d.data[0] : null;
+  const v = row ? row[el.dataset.field] : null;
+  if (v == null || v === '') {
+    el.textContent = '—';
+    if (d.status !== 'loading') el.classList.remove('dash-skeleton');
+    return;
+  }
+  el.classList.remove('dash-skeleton');
+  el.textContent = window.ppFmt[el.dataset.fmt || 'text'](v);
+});
+
+dash.draw('tabela', (tb) => {
+  const d = dash.data('por_cliente');
+  tb.replaceChildren();
+  if (d.status !== 'ok') return;
+  const f = window.ppFmt;
+  for (const r of d.data) {
+    const tr = document.createElement('tr');
+    tr.dataset.key = r.cliente;
+    const cell = (txt, cls) => { const td = document.createElement('td'); td.textContent = txt; if (cls) td.className = cls; tr.appendChild(td); return td; };
+    cell(r.cliente);
+    cell(f.int(r.carros));
+    cell(f.brl(r.faturado));
+    cell(f.brl(r.gasto));
+    cell(f.brl(r.resultado));
+    cell(f.pct(r.margem), r.margem < 0.5 ? 'bad' : r.margem < 0.7 ? 'warn' : 'ok');
+    cell(f.brl(r.ticket));
+    const td = cell('');
+    if (r.alerta) { const s = document.createElement('span'); s.className = 'pp-chip ' + (r.alerta === 'Margem baixa' ? 'bad' : 'warn'); s.textContent = r.alerta; td.appendChild(s); }
+    tb.appendChild(tr);
+  }
+});
+
+window.ppBars = (el, rows, series, opts) => {
+  el.replaceChildren();
+  const f = window.ppFmt;
+  const W = Math.max(280, el.clientWidth || 600);
+  const svg = d3.select(el).append('svg').attr('width', '100%');
+  const names = svg.append('g');
+  names.selectAll('text').data(rows).join('text').attr('class', 'nm').text((r) => r[opts.key || 'cliente']);
+  let left = 0; names.selectAll('text').each(function () { left = Math.max(left, this.getComputedTextLength()); });
+  left += 12;
+  const ends = svg.append('g');
+  const endTxt = rows.map(opts.endLabel);
+  ends.selectAll('text').data(endTxt).join('text').text((t) => t);
+  let right = 0; ends.selectAll('text').each(function () { right = Math.max(right, this.getComputedTextLength()); });
+  right += 10;
+  const rowH = opts.rowH, H = rows.length * rowH + 4;
+  svg.attr('viewBox', `0 0 ${W} ${H}`).attr('height', H);
+  const x = d3.scaleLinear([0, opts.max], [left, W - right]);
+  names.selectAll('text').attr('x', 0).attr('y', (r, i) => i * rowH + rowH / 2).attr('dominant-baseline', 'middle');
+  const tip = d3.select(el).append('div').attr('class', 'pp-tip').style('display', 'none');
+  rows.forEach((r, i) => {
+    const g = svg.append('g');
+    let endX = left;
+    series.forEach((s) => {
+      const y = i * rowH + s.y, x0 = s.stack ? endX : left, x1 = s.stack ? x(x.invert(endX) + s.v(r)) : x(s.v(r));
+      g.append('rect').attr('x', x0).attr('y', y).attr('height', s.h).attr('width', Math.max(0, x1 - x0)).attr('rx', 3).style('fill', typeof s.color === 'function' ? s.color(r) : s.color);
+      if (s.stack) endX = x1; else endX = Math.max(endX, x1);
+    });
+    ends.selectAll('text').filter((t, j) => j === i).attr('x', endX + 6).attr('y', i * rowH + rowH / 2).attr('dominant-baseline', 'middle');
+    g.append('rect').attr('x', 0).attr('y', i * rowH).attr('width', W).attr('height', rowH).style('fill', 'transparent')
+      .on('mousemove', (ev) => {
+        const [mx, my] = d3.pointer(ev, el);
+        tip.style('display', null).selectAll('*').remove();
+        tip.append('div').attr('class', 't').text(r[opts.key || 'cliente']);
+        opts.tip(r).forEach((line) => tip.append('div').text(line));
+        const tw = tip.node().offsetWidth;
+        tip.style('left', Math.min(Math.max(0, mx + 12), el.clientWidth - tw) + 'px').style('top', (my + 12) + 'px');
+      })
+      .on('mouseleave', () => tip.style('display', 'none'));
+  });
+};
+
+dash.draw('composicao', (el) => {
+  const d = dash.data('por_cliente');
+  if (d.status !== 'ok') { el.replaceChildren(); return; }
+  const f = window.ppFmt, rows = d.data;
+  window.ppBars(el, rows, [
+    { v: (r) => r.resultado, color: dash.colors[0], y: 9, h: 20, stack: true },
+    { v: (r) => r.gasto, color: 'var(--cds-chart-muted)', y: 9, h: 20, stack: true }
+  ], {
+    rowH: 38, max: d3.max(rows, (r) => r.faturado),
+    endLabel: (r) => f.pct(r.margem),
+    tip: (r) => ['Faturado ' + f.brl(r.faturado), 'Margem ' + f.brl(r.resultado) + ' (' + f.pct(r.margem) + ')', 'Gasto ' + f.brl(r.gasto)]
+  });
+});
+
+dash.draw('mix', (el) => {
+  const d = dash.data('por_cliente');
+  if (d.status !== 'ok') { el.replaceChildren(); return; }
+  const f = window.ppFmt, rows = d.data;
+  window.ppBars(el, rows, [
+    { v: (r) => r.share_carros, color: 'var(--cds-chart-muted)', y: 8, h: 10 },
+    { v: (r) => r.share_fat, color: dash.colors[0], y: 20, h: 10 }
+  ], {
+    rowH: 38, max: d3.max(rows, (r) => Math.max(r.share_carros, r.share_fat)),
+    endLabel: (r) => f.pct(r.share_carros) + ' · ' + f.pct(r.share_fat),
+    tip: (r) => [f.int(r.carros) + ' carros (' + f.pct(r.share_carros) + ' do total)', f.brl(r.faturado) + ' (' + f.pct(r.share_fat) + ' do faturado)', 'Ticket médio ' + f.brl(r.ticket)]
+  });
+});
+
+dash.calc('div_lista', {
+  inputs: ['dividas'],
+  title: 'Dívidas',
+  description: 'Cada dívida com atraso, parcela mensal, valor a vencer e situação.',
+  fn: (dividas) => {
+    const n = (x) => Number(x) || 0;
+    return dividas.map((r) => {
+      const nov = n(r.nov_26), dez = n(r.dez_26), jan = n(r.jan_27), fev = n(r.fev_27), saldo = n(r.saldo), atraso = n(r.atraso);
+      const temMensal = String(r.nov_26 ?? '') !== '';
+      const parcelas = r.parcela_atual ? String(r.parcela_atual) + (r.parcela_total ? '/' + r.parcela_total : '') : '';
+      return { id: String(r.id), credor: r.credor, grupo: r.grupo, atraso, mensal: temMensal ? nov : null,
+        nov, dez, jan, fev, saldo, a_vencer: nov + dez + jan + fev + saldo, parcelas,
+        situacao: atraso > 0 ? 'Em atraso' : 'Em dia' };
+    });
+  }
+});
+
+dash.calc('div_meses', {
+  inputs: ['div_lista'],
+  title: 'Parcelas por mês',
+  description: 'Soma das parcelas de cada mês, de novembro/26 a fevereiro/27, por grupo.',
+  fn: (div_lista) => {
+    const meses = [['nov/26', 'nov'], ['dez/26', 'dez'], ['jan/27', 'jan'], ['fev/27', 'fev']];
+    return meses.map(([mes, k]) => {
+      const row = { mes, Bancos: 0, Material: 0, Tributos: 0, Pessoal: 0, total: 0 };
+      div_lista.forEach((r) => { if (r.grupo in row) row[r.grupo] += r[k]; row.total += r[k]; });
+      return row;
+    });
+  }
+});
+
+dash.calc('div_grupos', {
+  inputs: ['div_lista'],
+  title: 'Dívida por grupo',
+  description: 'Valor em atraso e valor a vencer de cada grupo da planilha.',
+  fn: (div_lista) => {
+    const m = {};
+    div_lista.forEach((r) => {
+      const g = m[r.grupo] || (m[r.grupo] = { grupo: r.grupo, atraso: 0, a_vencer: 0, total: 0 });
+      g.atraso += r.atraso; g.a_vencer += r.a_vencer; g.total += r.atraso + r.a_vencer;
+    });
+    return Object.values(m).sort((a, b) => b.total - a.total);
+  }
+});
+
+dash.calc('div_totais', {
+  inputs: ['div_lista', 'totais'],
+  title: 'Totais das dívidas',
+  description: 'Atraso, parcela mensal, saldo, dívida total e parcela de novembro sobre a margem de outubro.',
+  fn: (div_lista, totais) => {
+    const soma = (k) => div_lista.reduce((s, r) => s + (r[k] || 0), 0);
+    const atraso = soma('atraso'), mensal_nov = soma('nov'), mensal_fev = soma('fev'), saldo = soma('saldo');
+    const margem = totais[0] ? totais[0].resultado : 0;
+    return [{ atraso, n_atraso: div_lista.filter((r) => r.atraso > 0).length, mensal_nov, mensal_fev, saldo,
+      total: atraso + soma('a_vencer'), pct_margem: margem ? mensal_nov / margem : null }];
+  }
+});
+
+dash.draw('div-tabela', (tb) => {
+  const d = dash.data('div_lista');
+  tb.replaceChildren();
+  if (d.status !== 'ok') return;
+  const f = window.ppFmt;
+  for (const r of d.data) {
+    const tr = document.createElement('tr');
+    tr.dataset.key = r.id;
+    const cell = (txt, cls) => { const td = document.createElement('td'); td.textContent = txt; if (cls) td.className = cls; tr.appendChild(td); return td; };
+    cell(r.credor);
+    cell(r.grupo);
+    cell(r.atraso ? f.brl(r.atraso) : f.brl(0), r.atraso ? 'bad' : '');
+    cell(r.mensal == null ? '—' : f.brl(r.mensal));
+    cell(r.parcelas || '—');
+    cell(f.brl(r.saldo));
+    const td = cell('');
+    const s = document.createElement('span');
+    s.className = 'pp-chip' + (r.atraso > 0 ? ' bad' : '');
+    s.textContent = r.situacao;
+    td.appendChild(s);
+    tb.appendChild(tr);
+  }
+});
+
+dash.draw('div-meses', (el) => {
+  const d = dash.data('div_meses');
+  if (d.status !== 'ok') { el.replaceChildren(); return; }
+  const f = window.ppFmt, rows = d.data;
+  const grupos = ['Bancos', 'Material', 'Tributos', 'Pessoal'];
+  window.ppBars(el, rows, grupos.map((g, i) => ({ v: (r) => r[g], color: dash.colors[i], y: 8, h: 20, stack: true })), {
+    key: 'mes', rowH: 36, max: d3.max(rows, (r) => r.total),
+    endLabel: (r) => f.brl0(r.total),
+    tip: (r) => ['Total ' + f.brl(r.total)].concat(grupos.filter((g) => r[g]).map((g) => g + ' ' + f.brl(r[g])))
+  });
+});
+
+dash.draw('div-grupos', (el) => {
+  const d = dash.data('div_grupos');
+  if (d.status !== 'ok') { el.replaceChildren(); return; }
+  const f = window.ppFmt, rows = d.data;
+  window.ppBars(el, rows, [
+    { v: (r) => r.atraso, color: 'var(--cds-chart-status-critical)', y: 8, h: 20, stack: true },
+    { v: (r) => r.a_vencer, color: dash.colors[0], y: 8, h: 20, stack: true }
+  ], {
+    key: 'grupo', rowH: 36, max: d3.max(rows, (r) => r.total),
+    endLabel: (r) => f.brl0(r.total),
+    tip: (r) => ['Em atraso ' + f.brl(r.atraso), 'A vencer ' + f.brl(r.a_vencer)]
+  });
+});
+</script>
+
+</div>
+</body>
+</html>
